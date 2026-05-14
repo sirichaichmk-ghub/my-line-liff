@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing...</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f7; }
+        .loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <p>กำลังดำเนินการ...</p>
+    </div>
+
+    <script>
+        async function main() {
+            // ใส่ LIFF ID ของคุณที่ได้จากหน้า LINE Developers ตรงนี้
+            await liff.init({ liffId: "ใส่_LIFF_ID_ของคุณตรงนี้" });
+
+            if (!liff.isLoggedIn()) {
+                liff.login();
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+
+            if (action === 'qr') {
+                runScanner();
+            } else if (action === 'loc') {
+                sendLocation();
+            } else {
+                alert("กรุณาเข้าใช้งานผ่าน Rich Menu");
+                liff.closeWindow();
+            }
+        }
+
+        async function runScanner() {
+            try {
+                const result = await liff.scanCodeV2();
+                if (result.value) {
+                    await liff.sendMessages([{ type: "text", text: result.value }]);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                liff.closeWindow();
+            }
+        }
+
+        function sendLocation() {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                try {
+                    await liff.sendMessages([{
+                        type: "location", title: "ตำแหน่งปัจจุบัน", address: "คลิกเพื่อดูแผนที่",
+                        latitude: pos.coords.latitude, longitude: pos.coords.longitude
+                    }]);
+                } finally {
+                    liff.closeWindow();
+                }
+            }, (err) => {
+                alert("กรุณาเปิด GPS");
+                liff.closeWindow();
+            }, { enableHighAccuracy: true });
+        }
+
+        main();
+    </script>
+</body>
+</html>
